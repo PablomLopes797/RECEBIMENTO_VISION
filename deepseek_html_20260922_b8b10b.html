@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AGENDA TRIZY · Importador Supabase</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+/* ============ BASE ============ */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#04050c;
+  --cyan:#22d3ee;
+  --violet:#8b5cf6;
+  --pink:#ec4899;
+  --green:#10b981;
+  --amber:#f59e0b;
+  --red:#ef4444;
+  --txt:#e9edfa;
+  --muted:#8891ad;
+  --stroke:rgba(255,255,255,.10);
+  --glass:rgba(255,255,255,.045);
+}
+html,body{height:100%}
+body{
+  background:var(--bg);
+  color:var(--txt);
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  overflow-x:hidden;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ============ FUNDO 3D ============ */
+.grid-bg{
+  position:fixed;inset:-20% -20% 0 -20%;
+  background-image:
+    linear-gradient(rgba(139,92,246,.10) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(34,211,238,.08) 1px,transparent 1px);
+  background-size:56px 56px;
+  transform:perspective(700px) rotateX(58deg) translateY(-6%) scale(2.2);
+  transform-origin:top center;
+  mask-image:radial-gradient(ellipse 70% 55% at 50% 0%,#000 0%,transparent 80%);
+  -webkit-mask-image:radial-gradient(ellipse 70% 55% at 50% 0%,#000 0%,transparent 80%);
+  animation:gridmove 6s linear infinite;
+  pointer-events:none;z-index:0;
+}
+@keyframes gridmove{to{background-position:0 56px,56px 0}}
+.orb{position:fixed;border-radius:50%;filter:blur(110px);opacity:.42;pointer-events:none;z-index:0}
+.o1{width:520px;height:520px;background:#7c3aed;top:-160px;left:-120px;animation:float1 14s ease-in-out infinite}
+.o2{width:460px;height:460px;background:#0891b2;top:20%;right:-160px;animation:float2 18s ease-in-out infinite}
+.o3{width:420px;height:420px;background:#db2777;bottom:-180px;left:35%;opacity:.25;animation:float3 20s ease-in-out infinite}
+@keyframes float1{50%{transform:translate(80px,60px) scale(1.15)}}
+@keyframes float2{50%{transform:translate(-70px,90px) scale(1.1)}}
+@keyframes float3{50%{transform:translate(60px,-70px) scale(1.2)}}
+
+/* ============ LAYOUT ============ */
+.app{position:relative;z-index:2;max-width:1120px;margin:0 auto;padding:56px 24px 100px}
+.hero{text-align:center;margin-bottom:48px;animation:rise .8s cubic-bezier(.2,.8,.2,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
+
+.pill{
+  display:inline-flex;align-items:center;gap:9px;
+  padding:8px 18px;border-radius:100px;
+  background:rgba(34,211,238,.07);
+  border:1px solid rgba(34,211,238,.28);
+  font-size:12px;font-weight:600;letter-spacing:.10em;text-transform:uppercase;
+  color:#7ee7f5;margin-bottom:22px;
+  box-shadow:0 0 32px rgba(34,211,238,.16),inset 0 1px 0 rgba(255,255,255,.08);
+  backdrop-filter:blur(10px);
+}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green);animation:pulse 1.8s infinite}
+@keyframes pulse{50%{opacity:.35;transform:scale(.8)}}
+
+h1{
+  font-size:clamp(2.3rem,6vw,3.9rem);font-weight:800;letter-spacing:-.035em;line-height:1.03;
+  margin-bottom:16px;
+}
+.grad{
+  background:linear-gradient(110deg,var(--cyan),var(--violet) 45%,var(--pink));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  background-size:200% auto;animation:shine 5s linear infinite;
+}
+@keyframes shine{to{background-position:200% center}}
+.sub{color:var(--muted);font-size:15.5px;max-width:620px;margin:0 auto;line-height:1.65}
+.sub b{color:#c7d2fe;font-weight:600}
+
+/* ============ CARDS ============ */
+.card{
+  background:linear-gradient(160deg,rgba(255,255,255,.055),rgba(255,255,255,.018));
+  border:1px solid var(--stroke);
+  border-radius:24px;
+  padding:26px 26px 28px;
+  margin-bottom:22px;
+  backdrop-filter:blur(22px);
+  -webkit-backdrop-filter:blur(22px);
+  box-shadow:0 26px 60px -22px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.07);
+  transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s,border-color .35s;
+  transform-style:preserve-3d;
+  will-change:transform;
+  animation:rise .7s cubic-bezier(.2,.8,.2,1) both;
+}
+.card:hover{border-color:rgba(139,92,246,.35);box-shadow:0 34px 80px -22px rgba(0,0,0,.9),0 0 60px -20px rgba(139,92,246,.4),inset 0 1px 0 rgba(255,255,255,.09)}
+.card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap}
+.card-head h2{font-size:14px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:#aab3cc}
+.hint{font-size:11.5px;color:var(--muted);letter-spacing:.05em}
+
+/* ============ DROPZONE ============ */
+.drop{
+  position:relative;border:2px dashed rgba(139,92,246,.38);
+  border-radius:20px;padding:52px 24px;text-align:center;cursor:pointer;
+  background:radial-gradient(circle at 50% 0%,rgba(139,92,246,.10),transparent 70%);
+  transition:all .3s cubic-bezier(.2,.8,.2,1);overflow:hidden;
+}
+.drop::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.10) 50%,transparent 70%);
+  transform:translateX(-130%);transition:transform .9s;
+}
+.drop:hover::after{transform:translateX(130%)}
+.drop:hover{border-color:rgba(34,211,238,.65);background:radial-gradient(circle at 50% 0%,rgba(34,211,238,.14),transparent 70%);transform:translateY(-3px)}
+.drop.over{border-color:var(--cyan);background:radial-gradient(circle at 50% 0%,rgba(34,211,238,.22),transparent 70%);transform:scale(1.015)}
+.drop-ico{
+  font-size:44px;line-height:1;margin-bottom:14px;
+  filter:drop-shadow(0 0 22px rgba(139,92,246,.85));
+  animation:bob 3s ease-in-out infinite;
+}
+@keyframes bob{50%{transform:translateY(-9px)}}
+.drop-t{font-size:17px;font-weight:600;margin-bottom:6px}
+.drop-s{font-size:13px;color:var(--muted)}
+
+/* ============ ARQUIVO ============ */
+.file-info{
+  display:flex;align-items:center;gap:16px;margin-top:18px;padding:15px 18px;
+  border-radius:16px;background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.28);
+  animation:rise .45s cubic-bezier(.2,.8,.2,1) both;
+}
+.fi-ico{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--green),#059669);display:grid;place-items:center;font-size:19px;flex-shrink:0;box-shadow:0 8px 22px -8px var(--green)}
+.fi-txt{flex:1;min-width:0}
+.fi-name{font-weight:600;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fi-meta{font-size:12.5px;color:var(--muted);margin-top:3px}
+
+/* ============ BOTÕES ============ */
+.btn{
+  border:none;cursor:pointer;font-family:inherit;font-weight:700;font-size:14.5px;
+  padding:15px 30px;border-radius:14px;letter-spacing:.02em;
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  transition:all .28s cubic-bezier(.2,.8,.2,1);position:relative;overflow:hidden;
+}
+.btn-primary{
+  background:linear-gradient(120deg,var(--cyan),var(--violet) 55%,var(--pink));
+  background-size:200% auto;color:#fff;
+  box-shadow:0 14px 36px -12px rgba(139,92,246,.9),inset 0 1px 0 rgba(255,255,255,.25);
+}
+.btn-primary:hover:not(:disabled){background-position:100% center;transform:translateY(-3px);box-shadow:0 20px 44px -12px rgba(139,92,246,1),inset 0 1px 0 rgba(255,255,255,.3)}
+.btn-primary:active:not(:disabled){transform:translateY(-1px) scale(.985)}
+.btn:disabled{opacity:.42;cursor:not-allowed;transform:none!important}
+.btn-ghost{background:rgba(255,255,255,.055);border:1px solid var(--stroke);color:var(--txt)}
+.btn-ghost:hover{background:rgba(255,255,255,.11);border-color:rgba(255,255,255,.24)}
+.btn-danger{background:rgba(239,68,68,.10);border:1px solid rgba(239,68,68,.35);color:#fca5a5}
+.btn-danger:hover{background:rgba(239,68,68,.2)}
+.actions{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap}
+
+/* ============ STATS ============ */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:14px}
+.stat{
+  padding:18px 18px 16px;border-radius:18px;
+  background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.015));
+  border:1px solid var(--stroke);position:relative;overflow:hidden;
+  transition:transform .3s cubic-bezier(.2,.8,.2,1),border-color .3s;
+}
+.stat:hover{transform:translateY(-5px) scale(1.02)}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--c,var(--cyan));opacity:.85;box-shadow:0 0 18px var(--c,var(--cyan))}
+.stat-v{font-size:31px;font-weight:800;letter-spacing:-.03em;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat-l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.11em;margin-top:7px;font-weight:600}
+
+/* ============ TABELA ============ */
+.tw{overflow:auto;max-height:390px;border-radius:16px;border:1px solid var(--stroke);background:rgba(0,0,0,.28)}
+table{width:100%;border-collapse:collapse;font-size:12.5px;white-space:nowrap}
+th{
+  position:sticky;top:0;z-index:2;background:#12142a;
+  padding:12px 14px;text-align:left;font-weight:700;font-size:10.5px;
+  text-transform:uppercase;letter-spacing:.09em;color:#9aa3c0;
+  border-bottom:1px solid rgba(255,255,255,.12);
+}
+td{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.045);color:#c8cfe4;font-variant-numeric:tabular-nums}
+tr:hover td{background:rgba(139,92,246,.09);color:#fff}
+.tag910{display:inline-block;padding:3px 9px;border-radius:7px;background:rgba(16,185,129,.16);color:#5eead4;font-weight:700;font-size:11px;border:1px solid rgba(16,185,129,.3)}
+
+/* ============ LOG ============ */
+.log{
+  font-family:'SFMono-Regular',Consolas,'Courier New',monospace;font-size:12.3px;
+  background:rgba(0,0,0,.42);border-radius:16px;border:1px solid var(--stroke);
+  padding:16px;max-height:280px;overflow-y:auto;line-height:1.85;
+}
+.log div{animation:rise .3s ease both;word-break:break-word}
+.log .t{color:#4b5570;margin-right:8px}
+.l-ok{color:#5eead4}.l-err{color:#fca5a5}.l-warn{color:#fcd34d}.l-info{color:#a5b4fc}.l-dim{color:#7c86a3}
+
+/* ============ AVANÇADO ============ */
+details.adv{margin-top:18px;border-top:1px solid var(--stroke);padding-top:16px}
+details.adv summary{cursor:pointer;font-size:12.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;font-weight:600;list-style:none;user-select:none;transition:color .25s}
+details.adv summary::-webkit-details-marker{display:none}
+details.adv summary:hover{color:var(--cyan)}
+details.adv summary::before{content:'▸ ';display:inline-block;transition:transform .25s}
+details.adv[open] summary::before{transform:rotate(90deg)}
+.adv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:16px}
+.fld label{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.09em;margin-bottom:7px;font-weight:600}
+.fld input,.fld select{
+  width:100%;padding:11px 14px;border-radius:11px;font-family:inherit;font-size:13.5px;
+  background:rgba(0,0,0,.35);border:1px solid var(--stroke);color:var(--txt);outline:none;transition:all .25s;
+}
+.fld input:focus,.fld select:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(34,211,238,.14)}
+.chk{display:flex;align-items:center;gap:10px;font-size:13px;color:#c3cae0;cursor:pointer;padding:11px 0}
+.chk input{width:17px;height:17px;accent-color:var(--violet);cursor:pointer}
+
+/* ============ OVERLAY LOADING ============ */
+.overlay{
+  position:fixed;inset:0;z-index:999;display:grid;place-items:center;
+  background:radial-gradient(circle at 50% 45%,rgba(20,16,48,.94),rgba(4,5,12,.985));
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  animation:fade .35s ease both;
+}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.load-box{text-align:center;max-width:440px;padding:0 24px;width:100%}
+.scene{perspective:900px;height:130px;display:grid;place-items:center;margin-bottom:26px}
+.cube{width:74px;height:74px;position:relative;transform-style:preserve-3d;animation:spinCube 3s infinite linear}
+@keyframes spinCube{
+  0%{transform:rotateX(-22deg) rotateY(0)}
+  100%{transform:rotateX(-22deg) rotateY(360deg)}
+}
+.cube i{
+  position:absolute;width:74px;height:74px;border:2px solid rgba(34,211,238,.55);
+  background:linear-gradient(135deg,rgba(34,211,238,.13),rgba(139,92,246,.13));
+  box-shadow:inset 0 0 34px rgba(34,211,238,.3),0 0 24px rgba(139,92,246,.22);
+  border-radius:8px;
+}
+.cube i:nth-child(1){transform:translateZ(37px)}
+.cube i:nth-child(2){transform:rotateY(180deg) translateZ(37px)}
+.cube i:nth-child(3){transform:rotateY(90deg) translateZ(37px)}
+.cube i:nth-child(4){transform:rotateY(-90deg) translateZ(37px)}
+.cube i:nth-child(5){transform:rotateX(90deg) translateZ(37px)}
+.cube i:nth-child(6){transform:rotateX(-90deg) translateZ(37px)}
+
+.load-title{font-size:19px;font-weight:700;margin-bottom:8px;letter-spacing:-.01em}
+.load-sub{font-size:13px;color:var(--muted);margin-bottom:26px;min-height:20px}
+
+.bar{height:7px;border-radius:100px;background:rgba(255,255,255,.08);overflow:hidden;position:relative;box-shadow:inset 0 1px 3px rgba(0,0,0,.6)}
+.bar-fill{
+  height:100%;width:0%;border-radius:100px;
+  background:linear-gradient(90deg,var(--cyan),var(--violet),var(--pink));
+  background-size:200% auto;animation:shine 2s linear infinite;
+  transition:width .45s cubic-bezier(.2,.8,.2,1);
+  box-shadow:0 0 20px rgba(139,92,246,.85);
+}
+.bar-pct{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:10px;letter-spacing:.06em;font-variant-numeric:tabular-nums}
+
+.steps{margin-top:28px;text-align:left;display:flex;flex-direction:column;gap:11px}
+.step{display:flex;align-items:center;gap:12px;font-size:13px;color:#5c6580;transition:all .35s}
+.step .bul{
+  width:22px;height:22px;border-radius:50%;flex-shrink:0;
+  border:2px solid rgba(255,255,255,.14);display:grid;place-items:center;
+  font-size:11px;font-weight:800;transition:all .35s;
+}
+.step.active{color:#e9edfa}
+.step.active .bul{border-color:var(--cyan);background:rgba(34,211,238,.16);box-shadow:0 0 18px rgba(34,211,238,.55);animation:pulse 1.2s infinite}
+.step.done{color:#5eead4}
+.step.done .bul{border-color:var(--green);background:var(--green);color:#04120c;box-shadow:0 0 16px rgba(16,185,129,.6)}
+
+/* ============ TOAST ============ */
+.toast{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(120px);
+  padding:15px 26px;border-radius:14px;font-size:14px;font-weight:600;z-index:1000;
+  backdrop-filter:blur(18px);transition:transform .45s cubic-bezier(.2,.8,.2,1);
+  box-shadow:0 20px 50px -14px rgba(0,0,0,.9);max-width:90vw;text-align:center;
+}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.ok{background:rgba(16,185,129,.18);border:1px solid rgba(16,185,129,.5);color:#6ee7b7}
+.toast.err{background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.5);color:#fca5a5}
+
+.hidden{display:none!important}
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(139,92,246,.4);border-radius:100px}
+::-webkit-scrollbar-thumb:hover{background:rgba(139,92,246,.7)}
+@media(max-width:640px){
+  .app{padding:34px 15px 70px}
+  .card{padding:20px 17px 22px;border-radius:19px}
+  .drop{padding:38px 16px}
+  .btn{width:100%}
+}
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+<div class="orb o1"></div>
+<div class="orb o2"></div>
+<div class="orb o3"></div>
+
+<div class="app">
+
+  <header class="hero">
+    <div class="pill"><span class="dot"></span> Supabase · AGENDA_TRIZY</div>
+    <h1>Importador <span class="grad">TRIZY</span></h1>
+    <p class="sub">
+      Carregue a base de <b>Itens (.xlsx)</b>. O tratamento é aplicado automaticamente
+      (Unidade Destino <b>910</b>) e cada registro é <b>gravado ou atualizado</b> pelo
+      <b>ID de Agendamento</b>.
+    </p>
+  </header>
+
+  <!-- ====== 1. ORIGEM ====== -->
+  <section class="card" data-tilt>
+    <div class="card-head">
+      <h2>1 · Origem dos dados</h2>
+      <span class="hint">.xlsx · .xls · .xlsm</span>
+    </div>
+
+    <div id="drop" class="drop">
+      <div class="drop-ico">📥</div>
+      <div class="drop-t">Arraste o arquivo aqui</div>
+      <div class="drop-s">ou clique para selecionar</div>
+      <input type="file" id="file" accept=".xlsx,.xls,.xlsm" hidden />
+    </div>
+
+    <div id="fileInfo" class="file-info hidden">
+      <div class="fi-ico">📄</div>
+      <div class="fi-txt">
+        <div class="fi-name" id="fiName">—</div>
+        <div class="fi-meta" id="fiMeta">—</div>
+      </div>
+      <button class="btn btn-ghost" id="btnClear" style="padding:10px 16px;font-size:13px">Trocar</button>
+    </div>
+
+    <details class="adv">
+      <summary>Configurações avançadas</summary>
+      <div class="adv-grid">
+        <div class="fld">
+          <label>Tabela Supabase</label>
+          <input id="cfgTable" value="AGENDA_TRIZY" />
+        </div>
+        <div class="fld">
+          <label>Coluna de conflito (upsert)</label>
+          <input id="cfgConflict" value="ID de Agendamento" />
+        </div>
+        <div class="fld">
+          <label>Nome da aba</label>
+          <input id="cfgSheet" value="Itens" />
+        </div>
+        <div class="fld">
+          <label>Registros por lote</label>
+          <select id="cfgBatch">
+            <option value="200">200</option>
+            <option value="500" selected>500</option>
+            <option value="1000">1000</option>
+          </select>
+        </div>
+        <div class="fld">
+          <label>Modo de gravação</label>
+          <select id="cfgMode">
+            <option value="merge" selected>Upsert (grava / atualiza)</option>
+            <option value="ignore">Ignorar duplicados (insert only)</option>
+          </select>
+        </div>
+        <div class="fld">
+          <label>Filtro Unidade Destino</label>
+          <input id="cfgFilter" value="910" maxlength="3" />
+        </div>
+      </div>
+      <label class="chk"><input type="checkbox" id="cfgSkipNoId" checked /> Ignorar linhas sem <b>ID de Agendamento</b></label>
+      <label class="chk"><input type="checkbox" id="cfgDry" /> Modo simulação (não grava no Supabase)</label>
+    </details>
+  </section>
+
+  <!-- ====== 2. PRÉVIA ====== -->
+  <section id="previewCard" class="card hidden" data-tilt>
+    <div class="card-head">
+      <h2>2 · Prévia tratada</h2>
+      <span class="hint" id="previewHint">—</span>
+    </div>
+    <div class="tw">
+      <table>
+        <thead id="thead"></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="actions">
+      <button class="btn btn-primary" id="btnSend">🚀 Enviar para o Supabase</button>
+      <button class="btn btn-danger" id="btnReset">Limpar</button>
+    </div>
+  </section>
+
+  <!-- ====== 3. RESUMO ====== -->
+  <section id="statsCard" class="card hidden" data-tilt>
+    <div class="card-head"><h2>3 · Resumo do processamento</h2></div>
+    <div class="stats" id="statsGrid"></div>
+  </section>
+
+  <!-- ====== 4. LOG ====== -->
+  <section id="logCard" class="card hidden" data-tilt>
+    <div class="card-head">
+      <h2>4 · Console de execução</h2>
+      <span class="hint" id="logHint">—</span>
+    </div>
+    <div class="log" id="log"></div>
+  </section>
+
+</div>
+
+<!-- ====== OVERLAY ====== -->
+<div id="overlay" class="overlay hidden">
+  <div class="load-box">
+    <div class="scene">
+      <div class="cube"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div class="load-title" id="loadTitle">Processando…</div>
+    <div class="load-sub" id="loadSub">Aguarde um instante</div>
+
+    <div class="bar"><div class="bar-fill" id="barFill"></div></div>
+    <div class="bar-pct"><span id="barLabel">0%</span><span id="barCount">—</span></div>
+
+    <div class="steps" id="steps">
+      <div class="step" data-s="0"><span class="bul">1</span> Lendo arquivo XLSX</div>
+      <div class="step" data-s="1"><span class="bul">2</span> Tratando e filtrando dados</div>
+      <div class="step" data-s="2"><span class="bul">3</span> Conectando ao Supabase</div>
+      <div class="step" data-s="3"><span class="bul">4</span> Enviando registros</div>
+      <div class="step" data-s="4"><span class="bul">5</span> Finalizando</div>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* ==================================================================
+   CONFIGURAÇÃO SUPABASE
+   ================================================================== */
+const SUPABASE = {
+  url: 'https://jgtisruauiajjfoesvol.supabase.co',
+  apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpndGlzcnVhdWlhampmb2Vzdm9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1OTY3NjYsImV4cCI6MjEwMzE3Mjc2Nn0.yiAsD6c06UEauyAUCFYs0KQnuWBVfLAeP_oYE8yGOwQ'
+};
+
+/* Colunas finais enviadas ao banco (nomes exatos das colunas do Postgres) */
+const OUT_COLS = [
+  'Produto','Unidade Destino','CNPJ Fornecedor','Fornecedor','Código do Item',
+  'Quantidade','Unidade de medida','Setor','Data Efetiva','ID de Agendamento'
+];
+
+/* ==================================================================
+   ESTADO
+   ================================================================== */
+let ARQUIVO = null;
+let PROCESSADO = null;   // { rows, stats }
+let ENVIANDO = false;
+
+/* ==================================================================
+   HELPERS
+   ================================================================== */
+const $ = (id) => document.getElementById(id);
+
+function toast(msg, tipo = 'ok') {
+  const t = $('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + tipo;
+  requestAnimationFrame(() => t.classList.add('show'));
+  clearTimeout(t._tm);
+  t._tm = setTimeout(() => t.classList.remove('show'), 4200);
+}
+
+function log(msg, cls = 'l-dim') {
+  const box = $('log');
+  const hora = new Date().toLocaleTimeString('pt-BR');
+  const el = document.createElement('div');
+  el.innerHTML = `<span class="t">${hora}</span><span class="${cls}">${msg}</span>`;
+  box.appendChild(el);
+  box.scrollTop = box.scrollHeight;
+}
+
+function setStep(i, estado) {
+  document.querySelectorAll('.step').forEach(s => {
+    const n = +s.dataset.s;
+    if (n < i) { s.classList.remove('active'); s.classList.add('done'); s.querySelector('.bul').textContent = '✓'; }
+    else if (n === i) { s.classList.remove('done'); s.classList.add('active'); }
+  });
+}
+function resetSteps() {
+  document.querySelectorAll('.step').forEach((s, i) => {
+    s.className = 'step';
+    s.querySelector('.bul').textContent = i + 1;
+  });
+}
+
+function progresso(pct, label, count) {
+  $('barFill').style.width = Math.max(0, Math.min(100, pct)) + '%';
+  $('barLabel').textContent = Math.round(pct) + '%';
+  if (count !== undefined) $('barCount').textContent = count;
+}
+
+/* ==================================================================
+   TRATAMENTO DOS DADOS (equivalente ao Power Query)
+   ================================================================== */
+function normalizarChave(k) {
+  return String(k ?? '').replace(/\u00A0/g, ' ').trim();
+}
+
+/** Equivalente a Text.Middle(texto, 7, 3) — base 0 */
+function textMiddle(valor, inicio, qtd) {
+  if (valor === null || valor === undefined) return '';
+  return String(valor).substr(inicio, qtd);
+}
+
+/** Converte número serial do Excel em Date */
+function serialParaData(n) {
+  try {
+    const o = XLSX.SSF.parse_date_code(n);
+    if (!o) return null;
+    return new Date(Date.UTC(o.y, o.m - 1, o.d, o.H || 0, o.M || 0, Math.floor(o.S || 0)));
+  } catch (e) { return null; }
+}
+
+/** Normaliza qualquer valor de data para ISO string */
+function paraISO(v) {
+  if (v === null || v === undefined || v === '') return null;
+  if (v instanceof Date) return isNaN(v.getTime()) ? null : v.toISOString();
+  if (typeof v === 'number') {
+    const d = v > 20000 && v < 90000 ? serialParaData(v) : new Date(v);
+    return d && !isNaN(d.getTime()) ? d.toISOString() : null;
+  }
+  const s = String(v).trim();
+  if (!s) return null;
+  // dd/mm/yyyy hh:mm
+  const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:[\s,]+(\d{2}):(\d{2})(?::(\d{2}))?)?/);
+  if (br) {
+    const d = new Date(Date.UTC(+br[3], +br[2] - 1, +br[1], +(br[4] || 0), +(br[5] || 0), +(br[6] || 0)));
+    return isNaN(d.getTime()) ? null : d.toISOString();
+  }
+  const d = new Date(s);
+  return isNaN(d.getTime()) ? null : d.toISOString();
+}
+
+/** Inteiro seguro */
+function paraInt(v) {
+  if (v === null || v === undefined || v === '') return null;
+  if (typeof v === 'number') return Number.isFinite(v) ? Math.trunc(v) : null;
+  const n = Number(String(v).replace(/[^\d.-]/g, ''));
+  return Number.isFinite(n) ? Math.trunc(n) : null;
+}
+
+/** Texto limpo */
+function paraTexto(v) {
+  if (v === null || v === undefined) return null;
+  const s = String(v).replace(/\u00A0/g, ' ').trim();
+  return s === '' ? null : s;
+}
+
+/** CNPJ — preserva os dígitos, evitando notação científica */
+function paraCNPJ(v) {
+  if (v === null || v === undefined || v === '') return null;
+  if (typeof v === 'number') return String(Math.trunc(v));
+  const s = String(v).trim().replace(/\.0+$/, '');
+  return s === '' ? null : s;
+}
+
+/* ---------- LEITURA + TRANSFORMAÇÃO ---------- */
+function processarWorkbook(wb, cfg) {
+  const nomeAba = cfg.sheet;
+  let ws = wb.Sheets[nomeAba];
+  if (!ws) {
+    ws = wb.Sheets[wb.SheetNames.find(n => normalizarChave(n).toLowerCase() === normalizarChave(nomeAba).toLowerCase())];
+  }
+  if (!ws) ws = wb.Sheets[wb.SheetNames[0]];
+  if (!ws) throw new Error('Nenhuma planilha encontrada no arquivo.');
+
+  // matriz crua
+  const matriz = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null, blankrows: false });
+  if (!matriz.length) throw new Error('A planilha está vazia.');
+
+  // cabeçalho = primeira linha não vazia
+  let idxHeader = matriz.findIndex(r => r && r.some(c => c !== null && String(c).trim() !== ''));
+  if (idxHeader < 0) throw new Error('Cabeçalho não encontrado.');
+
+  const cabecalho = matriz[idxHeader].map(normalizarChave);
+  const dados = matriz.slice(idxHeader + 1);
+
+  const idx = {};
+  cabecalho.forEach((c, i) => { if (!(c in idx)) idx[c] = i; });
+
+  const pegar = (linha, nome) => {
+    const i = idx[nome];
+    return i === undefined ? null : linha[i];
+  };
+
+  const filtro = String(cfg.filter || '910').trim();
+
+  const stats = {
+    totalLido: 0, validos: 0, ignoradosFiltro: 0,
+    semId: 0, duplicados: 0, descartadosVazios: 0
+  };
+
+  const mapa = new Map(); // dedup por ID de Agendamento
+  const semIdRows = [];
+
+  for (const linha of dados) {
+    if (!linha || !linha.some(c => c !== null && c !== undefined && String(c).trim() !== '')) continue;
+    stats.totalLido++;
+
+    // Unidade Destino = Text.Middle(valor, 7, 3)
+    const udRaw = pegar(linha, 'Unidade Destino');
+    const ud = textMiddle(udRaw, 7, 3);
+    if (ud !== filtro) { stats.ignoradosFiltro++; continue; }
+
+    const idAg = paraInt(pegar(linha, 'ID de Agendamento'));
+
+    const reg = {
+      'Produto': paraTexto(pegar(linha, 'Produto')),
+      'Unidade Destino': ud,
+      'CNPJ Fornecedor': paraCNPJ(pegar(linha, 'CNPJ Fornecedor')),
+      'Fornecedor': paraTexto(pegar(linha, 'Fornecedor')),
+      'Código do Item': paraInt(pegar(linha, 'Código do Item')),
+      'Quantidade': paraInt(pegar(linha, 'Quantidade')),
+      'Unidade de medida': paraTexto(pegar(linha, 'Unidade de medida')),
+      'Setor': paraTexto(pegar(linha, 'Setor')),
+      'Data Efetiva': paraISO(pegar(linha, 'Data Efetiva')),
+      'ID de Agendamento': idAg
+    };
+
+    if (idAg === null) {
+      if (cfg.skipNoId) { stats.semId++; continue; }
+      semIdRows.push(reg);
+      stats.validos++;
+      continue;
+    }
+
+    if (mapa.has(idAg)) stats.duplicados++;
+    mapa.set(idAg, reg);   // mantém a última ocorrência
+  }
+
+  const rows = [...mapa.values(), ...semIdRows];
+  stats.validos += mapa.size;
+
+  return { rows, stats };
+}
+
+/* ==================================================================
+   SUPABASE — UPSERT
+   ================================================================== */
+async function enviarLote(lote, cfg, tentativa = 1) {
+  const tabela = encodeURIComponent(cfg.table);
+  const conflito = encodeURIComponent(cfg.conflict);
+  const url = `${SUPABASE.url}/rest/v1/${tabela}?on_conflict=${conflito}`;
+
+  const prefer = cfg.mode === 'merge'
+    ? 'resolution=merge-duplicates,return=minimal'
+    : 'resolution=ignore-duplicates,return=minimal';
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'apikey': SUPABASE.apikey,
+      'Authorization': `Bearer ${SUPABASE.apikey}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Prefer': prefer
+    },
+    body: JSON.stringify(lote)
+  });
+
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '');
+    if (tentativa < 3) {
+      await new Promise(r => setTimeout(r, 700 * tentativa));
+      return enviarLote(lote, cfg, tentativa + 1);
+    }
+    throw new Error(`HTTP ${res.status} — ${txt.slice(0, 400) || res.statusText}`);
+  }
+  return true;
+}
+
+/* ==================================================================
+   FLUXO PRINCIPAL — ENVIO
+   ================================================================== */
+async function enviar() {
+  if (ENVIANDO || !PROCESSADO || !PROCESSADO.rows.length) return;
+  ENVIANDO = true;
+
+  const cfg = {
+    table: $('cfgTable').value.trim() || 'AGENDA_TRIZY',
+    conflict: $('cfgConflict').value.trim() || 'ID de Agendamento',
+    sheet: $('cfgSheet').value.trim() || 'Itens',
+    batch: parseInt($('cfgBatch').value, 10) || 500,
+    mode: $('cfgMode').value,
+    filter: $('cfgFilter').value.trim() || '910',
+    skipNoId: $('cfgSkipNoId').checked,
+    dry: $('cfgDry').checked
+  };
+
+  const rows = PROCESSADO.rows;
+
+  // UI
+  $('overlay').classList.remove('hidden');
+  $('btnSend').disabled = true;
+  resetSteps();
+  $('logCard').classList.remove('hidden');
+  $('log').innerHTML = '';
+  progresso(0, '0%', `0 / ${rows.length}`);
+
+  const t0 = performance.now();
+  let enviados = 0, falhas = 0, lotesOk = 0;
+  const errosDetalhe = [];
+
+  try {
+    /* --- passo 1/2 já ocorreram na leitura --- */
+    setStep(0); $('loadTitle').textContent = 'Arquivo lido'; $('loadSub').textContent = 'Dados tratados com sucesso';
+    progresso(8, '8%', `${rows.length} registros`);
+    await sleep(280);
+
+    setStep(1);
+    $('loadTitle').textContent = 'Tratando dados';
+    $('loadSub').textContent = `Filtro Unidade Destino = ${cfg.filter}`;
+    progresso(16, '16%', `${rows.length} válidos`);
+    await sleep(300);
+
+    /* --- passo 3: conexão --- */
+    setStep(2);
+    $('loadTitle').textContent = 'Conectando ao Supabase';
+    $('loadSub').textContent = `${cfg.table} · upsert por "${cfg.conflict}"`;
+    log(`Conectando em <b>${cfg.table}</b>…`, 'l-info');
+    await sleep(400);
+
+    if (cfg.dry) {
+      log('⚠️ MODO SIMULAÇÃO ativo — nada será gravado.', 'l-warn');
+    } else {
+      // teste de conectividade leve
+      const ping = await fetch(`${SUPABASE.url}/rest/v1/${encodeURIComponent(cfg.table)}?select=*&limit=1`, {
+        headers: { 'apikey': SUPABASE.apikey, 'Authorization': `Bearer ${SUPABASE.apikey}` }
+      });
+      if (!ping.ok) {
+        const t = await ping.text().catch(() => '');
+        throw new Error(`Falha ao acessar a tabela (HTTP ${ping.status}). ${t.slice(0, 220)}`);
+      }
+    }
+    log('Conexão estabelecida ✓', 'l-ok');
+    progresso(22, '22%', 'conectado');
+    await sleep(250);
+
+    /* --- passo 4: lotes --- */
+    setStep(3);
+    $('loadTitle').textContent = 'Enviando registros';
+    const lotes = [];
+    for (let i = 0; i < rows.length; i += cfg.batch) lotes.push(rows.slice(i, i + cfg.batch));
+
+    log(`Iniciando envio de <b>${rows.length}</b> registros em <b>${lotes.length}</b> lote(s) de até ${cfg.batch}.`, 'l-info');
+
+    for (let i = 0; i < lotes.length; i++) {
+      const lote = lotes[i];
+      $('loadSub').textContent = `Lote ${i + 1} de ${lotes.length} · ${lote.length} registros`;
+
+      if (cfg.dry) {
+        await sleep(120);
+        enviados += lote.length;
+        lotesOk++;
+      } else {
+        try {
+          await enviarLote(lote, cfg);
+          enviados += lote.length;
+          lotesOk++;
+          log(`Lote ${i + 1}/${lotes.length} — ${lote.length} registros sincronizados ✓`, 'l-ok');
+        } catch (err) {
+          falhas += lote.length;
+          errosDetalhe.push({ lote: i + 1, erro: err.message, linhas: lote.length });
+          log(`Lote ${i + 1}/${lotes.length} FALHOU — ${err.message}`, 'l-err');
+        }
+      }
+
+      const pct = 22 + ((i + 1) / lotes.length) * 70;
+      progresso(pct, pct.toFixed(0) + '%', `${enviados} / ${rows.length}`);
+      await sleep(60);
+    }
+
+    /* --- passo 5 --- */
+    setStep(4);
+    $('loadTitle').textContent = 'Finalizando';
+    $('loadSub').textContent = 'Consolidando resultados';
+    progresso(97, '97%', `${enviados} / ${rows.length}`);
+    await sleep(420);
+
+    progresso(100, '100%', `${enviados} / ${rows.length}`);
+    setStep(5);
+
+    const dur = ((performance.now() - t0) / 1000).toFixed(1);
+    log(`Processo concluído em <b>${dur}s</b>. Sucesso: <b>${enviados}</b> · Falhas: <b>${falhas}</b>.`, falhas ? 'l-warn' : 'l-ok');
+
+    // Atualiza cards de resumo
+    montarStats(PROCESSADO.stats, { enviados, falhas, lotesOk, totalLotes: lotes.length, dur });
+
+    await sleep(700);
+    $('overlay').classList.add('hidden');
+
+    if (falhas === 0) {
+      toast(`✅ ${enviados} registros sincronizados com sucesso!`, 'ok');
+    } else {
+      toast(`⚠️ ${enviados} enviados · ${falhas} com falha. Veja o console.`, 'err');
+    }
+
+  } catch (err) {
+    console.error(err);
+    log(`ERRO CRÍTICO: ${err.message}`, 'l-err');
+    $('loadTitle').textContent = 'Erro no processamento';
+    $('loadSub').textContent = err.message;
+    await sleep(1500);
+    $('overlay').classList.add('hidden');
+    toast('❌ ' + err.message, 'err');
+  } finally {
+    ENVIANDO = false;
+    $('btnSend').disabled = false;
+  }
+}
+
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+/* ==================================================================
+   RENDER — STATS
+   ================================================================== */
+function montarStats(st, env) {
+  const itens = [
+    { l: 'Total lido', v: st.totalLido, c: '#8891ad' },
+    { l: 'Válidos (910)', v: st.validos, c: '#22d3ee' },
+    { l: 'Ignorados filtro', v: st.ignoradosFiltro, c: '#f59e0b' },
+    { l: 'Sem ID Agend.', v: st.semId, c: '#ec4899' },
+    { l: 'Duplicados', v: st.duplicados, c: '#8b5cf6' },
+    { l: 'Enviados', v: env.enviados, c: '#10b981' },
+    { l: 'Falhas', v: env.falhas, c: env.falhas ? '#ef4444' : '#4b5563' },
+    { l: 'Lotes OK', v: `${env.lotesOk}/${env.totalLotes}`, c: '#22d3ee' },
+    { l: 'Tempo', v: env.dur + 's', c: '#8b5cf6' }
+  ];
+  const grid = $('statsGrid');
+  grid.innerHTML = '';
+  itens.forEach((it, i) => {
+    const d = document.createElement('div');
+    d.className = 'stat';
+    d.style.setProperty('--c', it.c);
+    d.style.animation = `rise .5s cubic-bezier(.2,.8,.2,1) ${i * 55}ms both`;
+    d.innerHTML = `<div class="stat-v" style="color:${it.c}">${it.v}</div><div class="stat-l">${it.l}</div>`;
+    grid.appendChild(d);
+  });
+  $('statsCard').classList.remove('hidden');
+}
+
+/* ==================================================================
+   RENDER — PRÉVIA
+   ================================================================== */
+function renderPreview(rows) {
+  const thead = $('thead'), tbody = $('tbody');
+  thead.innerHTML = '<tr>' + OUT_COLS.map(c => `<th>${c}</th>`).join('') + '</tr>';
+
+  const amostra = rows.slice(0, 60);
+  tbody.innerHTML = amostra.map(r => {
+    return '<tr>' + OUT_COLS.map(c => {
+      let v = r[c];
+      if (v === null || v === undefined) v = '<span style="color:#4b5570">—</span>';
+      else if (c === 'Unidade Destino') v = `<span class="tag910">${v}</span>`;
+      else if (c === 'Data Efetiva') v = String(v).replace('T', ' ').slice(0, 19);
+      else v = String(v).replace(/</g, '&lt;');
+      return `<td>${v}</td>`;
+    }).join('') + '</tr>';
+  }).join('');
+
+  $('previewHint').textContent = `exibindo ${amostra.length} de ${rows.length} registros tratados`;
+  $('previewCard').classList.remove('hidden');
+  $('statsCard').classList.add('hidden');
+}
+
+/* ==================================================================
+   LEITURA DO ARQUIVO
+   ================================================================== */
+async function lerArquivo(file) {
+  ARQUIVO = file;
+  $('fiName').textContent = file.name;
+  $('fiMeta').textContent = (file.size / 1024).toFixed(1) + ' KB · lendo…';
+  $('fileInfo').classList.remove('hidden');
+
+  $('overlay').classList.remove('hidden');
+  resetSteps();
+  setStep(0);
+  $('loadTitle').textContent = 'Lendo arquivo';
+  $('loadSub').textContent = file.name;
+  progresso(10, '10%', '—');
+  $('log').innerHTML = '';
+  $('logCard').classList.remove('hidden');
+  log(`Arquivo recebido: <b>${file.name}</b> (${(file.size / 1024).toFixed(1)} KB)`, 'l-info');
+
+  try {
+    const buffer = await file.arrayBuffer();
+    progresso(35, '35%', '—');
+    await sleep(200);
+
+    const wb = XLSX.read(buffer, { type: 'array', cellDates: true, cellNF: false, cellText: false });
+    log(`Abas encontradas: ${wb.SheetNames.join(', ')}`, 'l-dim');
+
+    setStep(1);
+    $('loadTitle').textContent = 'Tratando dados';
+    $('loadSub').textContent = 'Promovendo cabeçalhos, tipando e filtrando…';
+    progresso(55, '55%', '—');
+    await sleep(220);
+
+    const cfg = {
+      sheet: $('cfgSheet').value.trim() || 'Itens',
+      filter: $('cfgFilter').value.trim() || '910',
+      skipNoId: $('cfgSkipNoId').checked
+    };
+
+    const { rows, stats } = processarWorkbook(wb, cfg);
+    PROCESSADO = { rows, stats };
+
+    progresso(80, '80%', `${rows.length} registros`);
+    await sleep(180);
+
+    log(`Total de linhas lidas: <b>${stats.totalLido}</b>`, 'l-dim');
+    log(`Unidade Destino ≠ ${cfg.filter}: <b>${stats.ignoradosFiltro}</b> ignoradas`, 'l-warn');
+    log(`Duplicados por ID (última ocorrência mantida): <b>${stats.duplicados}</b>`, 'l-warn');
+    log(`Linhas sem ID de Agendamento: <b>${stats.semId}</b>${cfg.skipNoId ? ' (ignoradas)' : ' (incluídas)'}`, 'l-warn');
+    log(`Registros prontos para envio: <b>${rows.length}</b>`, 'l-ok');
+
+    progresso(100, '100%', `${rows.length} registros`);
+    setStep(5);
+    await sleep(450);
+
+    $('overlay').classList.add('hidden');
+    $('fiMeta').textContent = `${(file.size / 1024).toFixed(1)} KB · ${rows.length} registros válidos`;
+
+    if (!rows.length) {
+      toast('Nenhum registro passou pelo filtro Unidade Destino = ' + cfg.filter, 'err');
+      $('previewCard').classList.add('hidden');
+      return;
+    }
+
+    renderPreview(rows);
+    toast(`✅ ${rows.length} registros prontos para envio`, 'ok');
+
+  } catch (err) {
+    console.error(err);
+    $('overlay').classList.add('hidden');
+    log(`ERRO: ${err.message}`, 'l-err');
+    toast('❌ ' + err.message, 'err');
+    $('fiMeta').textContent = 'falha na leitura';
+  }
+}
+
+/* ==================================================================
+   EVENTOS
+   ================================================================== */
+const drop = $('drop');
+const input = $('file');
+
+drop.addEventListener('click', () => input.click());
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+drop.addEventListener('drop', e => {
+  e.preventDefault();
+  drop.classList.remove('over');
+  const f = e.dataTransfer.files?.[0];
+  if (f) validarEEnviar(f);
+});
+input.addEventListener('change', e => {
+  const f = e.target.files?.[0];
+  if (f) validarEEnviar(f);
+  input.value = '';
+});
+
+function validarEEnviar(f) {
+  const ok = /\.(xlsx|xls|xlsm)$/i.test(f.name);
+  if (!ok) { toast('Formato inválido. Envie um arquivo .xlsx', 'err'); return; }
+  lerArquivo(f);
+}
+
+$('btnSend').addEventListener('click', enviar);
+
+$('btnReset').addEventListener('click', resetTudo);
+$('btnClear').addEventListener('click', resetTudo);
+
+function resetTudo() {
+  ARQUIVO = null; PROCESSADO = null;
+  $('fileInfo').classList.add('hidden');
+  $('previewCard').classList.add('hidden');
+  $('statsCard').classList.add('hidden');
+  $('logCard').classList.add('hidden');
+  $('log').innerHTML = '';
+  $('fiName').textContent = '—';
+  $('fiMeta').textContent = '—';
+  toast('Pronto para um novo arquivo', 'ok');
+}
+
+/* ==================================================================
+   EFEITO 3D (tilt) NOS CARDS
+   ================================================================== */
+document.querySelectorAll('[data-tilt]').forEach(el => {
+  el.addEventListener('mousemove', e => {
+    if (window.innerWidth < 900) return;
+    const r = el.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - .5;
+    const y = (e.clientY - r.top) / r.height - .5;
+    el.style.transform = `perspective(1200px) rotateY(${x * 3.2}deg) rotateX(${-y * 3.2}deg) translateY(-2px)`;
+  });
+  el.addEventListener('mouseleave', () => { el.style.transform = ''; });
+});
+
+/* ==================================================================
+   BOOT
+   ================================================================== */
+console.log('%cAGENDA TRIZY · Importador', 'color:#22d3ee;font-size:16px;font-weight:bold');
+console.log('%cSupabase:', 'color:#8b5cf6', SUPABASE.url);
+</script>
+</body>
+</html>
