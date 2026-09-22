@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Central de Recepção · TRIZY</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ==================================================================
+   TEMA · VARIÁVEIS
+   ================================================================== */
+:root{
+  --cyan:#22d3ee; --violet:#8b5cf6; --pink:#ec4899;
+  --green:#10b981; --amber:#f59e0b; --red:#ef4444;
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+:root[data-theme="dark"]{
+  --bg-1:#04050c; --bg-2:#0a0e1f;
+  --txt:#e9edfa; --muted:#8891ad; --muted-2:#5c6580;
+  --stroke:rgba(255,255,255,.10);
+  --stroke-strong:rgba(255,255,255,.18);
+  --glass:rgba(255,255,255,.045);
+  --glass-strong:rgba(255,255,255,.08);
+  --input-bg:rgba(0,0,0,.35);
+  --input-ro-bg:rgba(139,92,246,.09);
+  --input-ro-border:rgba(139,92,246,.28);
+  --table-head:#12142a;
+  --table-border:rgba(255,255,255,.05);
+  --table-hover:rgba(139,92,246,.09);
+  --shadow:0 26px 60px -22px rgba(0,0,0,.85);
+  --grid-1:rgba(139,92,246,.10); --grid-2:rgba(34,211,238,.08);
+  --orb-op:.42; --scroll:rgba(139,92,246,.4); --scroll-h:rgba(139,92,246,.7);
+  --modal-backdrop:rgba(4,5,12,.75);
+}
+:root[data-theme="light"]{
+  --bg-1:#eef1f8; --bg-2:#f8fafc;
+  --txt:#0f172a; --muted:#64748b; --muted-2:#94a3b8;
+  --stroke:rgba(15,23,42,.10);
+  --stroke-strong:rgba(15,23,42,.18);
+  --glass:rgba(255,255,255,.7);
+  --glass-strong:rgba(255,255,255,.9);
+  --input-bg:rgba(255,255,255,.95);
+  --input-ro-bg:rgba(139,92,246,.06);
+  --input-ro-border:rgba(139,92,246,.22);
+  --table-head:#f1f5f9;
+  --table-border:rgba(15,23,42,.06);
+  --table-hover:rgba(139,92,246,.06);
+  --shadow:0 20px 50px -20px rgba(15,23,42,.18);
+  --grid-1:rgba(139,92,246,.15); --grid-2:rgba(34,211,238,.12);
+  --orb-op:.28; --scroll:rgba(139,92,246,.35); --scroll-h:rgba(139,92,246,.6);
+  --modal-backdrop:rgba(15,23,42,.35);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:radial-gradient(ellipse at 50% -20%,var(--bg-2),var(--bg-1) 60%);
+  color:var(--txt);
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  min-height:100vh;overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+  transition:background .5s var(--ease),color .35s var(--ease);
+}
+
+/* ==================================================================
+   FUNDO 3D
+   ================================================================== */
+.grid-bg{
+  position:fixed;inset:-20% -20% 0 -20%;
+  background-image:
+    linear-gradient(var(--grid-1) 1px,transparent 1px),
+    linear-gradient(90deg,var(--grid-2) 1px,transparent 1px);
+  background-size:56px 56px;
+  transform:perspective(700px) rotateX(58deg) translateY(-6%) scale(2.2);
+  transform-origin:top center;
+  mask-image:radial-gradient(ellipse 70% 55% at 50% 0%,#000 0%,transparent 80%);
+  -webkit-mask-image:radial-gradient(ellipse 70% 55% at 50% 0%,#000 0%,transparent 80%);
+  animation:gridmove 6s linear infinite;
+  pointer-events:none;z-index:0;transition:background-image .5s;
+}
+@keyframes gridmove{to{background-position:0 56px,56px 0}}
+.orb{position:fixed;border-radius:50%;filter:blur(110px);opacity:var(--orb-op);pointer-events:none;z-index:0;transition:opacity .5s}
+.o1{width:520px;height:520px;background:#7c3aed;top:-160px;left:-120px;animation:float1 14s ease-in-out infinite}
+.o2{width:460px;height:460px;background:#0891b2;top:20%;right:-160px;animation:float2 18s ease-in-out infinite}
+.o3{width:420px;height:420px;background:#db2777;bottom:-180px;left:35%;opacity:.25;animation:float3 20s ease-in-out infinite}
+@keyframes float1{50%{transform:translate(80px,60px) scale(1.15)}}
+@keyframes float2{50%{transform:translate(-70px,90px) scale(1.1)}}
+@keyframes float3{50%{transform:translate(60px,-70px) scale(1.2)}}
+
+/* ==================================================================
+   TOPBAR
+   ================================================================== */
+.topbar{
+  position:sticky;top:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 32px;gap:16px;
+  background:var(--glass);
+  border-bottom:1px solid var(--stroke);
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+}
+.brand{display:flex;align-items:center;gap:14px}
+.brand-logo{
+  width:40px;height:40px;border-radius:12px;
+  background:linear-gradient(135deg,var(--cyan),var(--violet) 55%,var(--pink));
+  background-size:200% auto;
+  display:grid;place-items:center;font-weight:900;font-size:18px;color:#fff;
+  box-shadow:0 10px 28px -10px rgba(139,92,246,.9);
+  animation:shine 5s linear infinite;
+}
+.brand-txt{display:flex;flex-direction:column;line-height:1.15}
+.brand-txt strong{font-size:15.5px;font-weight:800;letter-spacing:-.01em}
+.brand-txt span{font-size:11.5px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+.top-actions{display:flex;align-items:center;gap:10px}
+
+.theme-toggle{
+  width:44px;height:44px;border-radius:13px;cursor:pointer;
+  background:var(--glass-strong);border:1px solid var(--stroke);
+  display:grid;place-items:center;color:var(--txt);
+  transition:all .3s var(--ease);position:relative;overflow:hidden;
+}
+.theme-toggle:hover{border-color:rgba(139,92,246,.5);transform:translateY(-2px) rotate(-8deg)}
+.theme-toggle svg{width:20px;height:20px;transition:transform .5s var(--ease),opacity .35s}
+:root[data-theme="dark"] .icon-sun{opacity:1;transform:rotate(0) scale(1)}
+:root[data-theme="dark"] .icon-moon{opacity:0;transform:rotate(90deg) scale(.4);position:absolute}
+:root[data-theme="light"] .icon-sun{opacity:0;transform:rotate(-90deg) scale(.4);position:absolute}
+:root[data-theme="light"] .icon-moon{opacity:1;transform:rotate(0) scale(1)}
+
+.btn{
+  border:none;cursor:pointer;font-family:inherit;font-weight:700;font-size:14px;
+  padding:12px 22px;border-radius:12px;letter-spacing:.01em;
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  transition:all .28s var(--ease);position:relative;overflow:hidden;
+}
+.btn-primary{
+  background:linear-gradient(120deg,var(--cyan),var(--violet) 55%,var(--pink));
+  background-size:200% auto;color:#fff;
+  box-shadow:0 12px 32px -12px rgba(139,92,246,.9),inset 0 1px 0 rgba(255,255,255,.25);
+}
+.btn-primary:hover:not(:disabled){background-position:100% center;transform:translateY(-2px);box-shadow:0 18px 42px -12px rgba(139,92,246,1)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-ghost{
+  background:var(--glass-strong);border:1px solid var(--stroke);color:var(--txt);
+}
+.btn-ghost:hover{background:rgba(139,92,246,.12);border-color:rgba(139,92,246,.4)}
+.btn .spin{
+  width:15px;height:15px;border-radius:50%;
+  border:2px solid rgba(255,255,255,.25);border-top-color:#fff;
+  animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes shine{to{background-position:200% center}}
+
+/* ==================================================================
+   APP
+   ================================================================== */
+.app{position:relative;z-index:2;max-width:1280px;margin:0 auto;padding:44px 32px 100px}
+
+.hero{margin-bottom:38px;animation:rise .7s var(--ease) both}
+.hero .pill{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:7px 15px;border-radius:100px;
+  background:rgba(34,211,238,.08);
+  border:1px solid rgba(34,211,238,.28);
+  font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:#7ee7f5;margin-bottom:16px;
+}
+.hero .pill .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green);animation:pulse 1.8s infinite}
+@keyframes pulse{50%{opacity:.35;transform:scale(.8)}}
+.hero h1{
+  font-size:clamp(1.9rem,4.2vw,2.9rem);font-weight:800;letter-spacing:-.035em;line-height:1.08;
+  margin-bottom:10px;
+}
+.hero h1 .grad{
+  background:linear-gradient(110deg,var(--cyan),var(--violet) 45%,var(--pink));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  background-size:200% auto;animation:shine 5s linear infinite;
+}
+.hero p{color:var(--muted);font-size:14.5px;max-width:640px;line-height:1.6}
+
+@keyframes rise{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
+
+/* ==================================================================
+   STATS
+   ================================================================== */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:26px}
+.stat{
+  padding:20px 20px 18px;border-radius:18px;
+  background:linear-gradient(160deg,var(--glass-strong),var(--glass));
+  border:1px solid var(--stroke);position:relative;overflow:hidden;
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  transition:transform .35s var(--ease),border-color .3s;
+  box-shadow:var(--shadow);
+}
+.stat:hover{transform:translateY(-5px) scale(1.02);border-color:rgba(139,92,246,.4)}
+.stat::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:var(--c,var(--cyan));opacity:.9;box-shadow:0 0 18px var(--c,var(--cyan));
+}
+.stat-v{
+  font-size:30px;font-weight:800;letter-spacing:-.03em;line-height:1.1;
+  font-variant-numeric:tabular-nums;color:var(--c,var(--cyan));
+}
+.stat-l{
+  font-size:11px;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.11em;margin-top:7px;font-weight:700;
+}
+
+/* ==================================================================
+   CARD / TABELA
+   ================================================================== */
+.card{
+  background:linear-gradient(160deg,var(--glass-strong),var(--glass));
+  border:1px solid var(--stroke);
+  border-radius:22px;padding:26px;
+  backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);
+  box-shadow:var(--shadow);
+  transition:border-color .3s,transform .35s var(--ease);
+  animation:rise .7s var(--ease) .1s both;
+}
+.card-head{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:16px;margin-bottom:20px;flex-wrap:wrap;
+}
+.card-head h2{
+  font-size:13px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--muted);display:flex;align-items:center;gap:10px;
+}
+.card-head h2::before{
+  content:'';width:3px;height:16px;border-radius:2px;
+  background:linear-gradient(180deg,var(--cyan),var(--violet));
+  box-shadow:0 0 12px rgba(139,92,246,.8);
+}
+
+.tw{
+  overflow:auto;max-height:520px;border-radius:16px;
+  border:1px solid var(--stroke);background:rgba(0,0,0,.14);
+}
+:root[data-theme="light"] .tw{background:rgba(255,255,255,.5)}
+table{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap}
+th{
+  position:sticky;top:0;z-index:2;background:var(--table-head);
+  padding:14px 16px;text-align:left;
+  font-weight:800;font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--muted);border-bottom:1px solid var(--stroke);
+}
+td{
+  padding:13px 16px;border-bottom:1px solid var(--table-border);
+  color:var(--txt);font-variant-numeric:tabular-nums;
+}
+tbody tr{transition:background .2s}
+tbody tr:hover td{background:var(--table-hover)}
+tbody tr:last-child td{border-bottom:none}
+
+.badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 11px;border-radius:8px;font-weight:700;font-size:11.5px;
+  border:1px solid;letter-spacing:.02em;
+}
+.badge-senha{background:rgba(34,211,238,.12);border-color:rgba(34,211,238,.32);color:#67e8f9}
+.badge-cat{background:rgba(139,92,246,.12);border-color:rgba(139,92,246,.32);color:#c4b5fd}
+.badge-placa{
+  background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.32);color:#5eead4;
+  font-family:'SFMono-Regular',Consolas,monospace;font-weight:800;
+}
+
+.empty{
+  text-align:center;padding:60px 24px;color:var(--muted);
+}
+.empty-ico{font-size:52px;margin-bottom:14px;opacity:.5}
+.empty-t{font-size:15px;font-weight:600;color:var(--muted);margin-bottom:6px}
+.empty-s{font-size:13px;color:var(--muted-2)}
+
+/* ==================================================================
+   MODAL
+   ================================================================== */
+.modal-overlay{
+  position:fixed;inset:0;z-index:500;
+  background:var(--modal-backdrop);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  display:grid;place-items:center;padding:24px;
+  opacity:0;pointer-events:none;
+  transition:opacity .35s var(--ease);
+}
+.modal-overlay.open{opacity:1;pointer-events:auto}
+.modal{
+  width:100%;max-width:780px;max-height:92vh;overflow-y:auto;
+  background:linear-gradient(165deg,var(--glass-strong),var(--glass));
+  border:1px solid var(--stroke-strong);
+  border-radius:26px;
+  backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);
+  box-shadow:0 40px 100px -20px rgba(0,0,0,.7),0 0 80px -30px rgba(139,92,246,.5);
+  transform:scale(.94) translateY(28px);opacity:0;
+  transition:transform .45s var(--ease),opacity .35s var(--ease);
+}
+.modal-overlay.open .modal{transform:scale(1) translateY(0);opacity:1}
+
+.modal-head{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:16px;
+  padding:26px 28px 22px;
+  border-bottom:1px solid var(--stroke);
+}
+.modal-head h3{
+  font-size:20px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px;
+  display:flex;align-items:center;gap:11px;
+}
+.modal-head h3 .mh-ico{
+  width:38px;height:38px;border-radius:11px;
+  background:linear-gradient(135deg,var(--cyan),var(--violet) 60%,var(--pink));
+  background-size:200% auto;
+  display:grid;place-items:center;font-size:19px;color:#fff;
+  box-shadow:0 10px 26px -10px rgba(139,92,246,.9);
+  animation:shine 5s linear infinite;
+}
+.modal-head p{font-size:13px;color:var(--muted);margin-left:49px}
+.close-x{
+  width:38px;height:38px;border-radius:11px;border:1px solid var(--stroke);
+  background:var(--glass-strong);color:var(--txt);cursor:pointer;
+  display:grid;place-items:center;font-size:20px;line-height:1;
+  transition:all .25s var(--ease);flex-shrink:0;
+}
+.close-x:hover{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.4);color:#fca5a5;transform:rotate(90deg)}
+
+.modal-body{padding:26px 28px}
+.modal-foot{
+  display:flex;gap:12px;justify-content:flex-end;
+  padding:20px 28px 24px;border-top:1px solid var(--stroke);
+}
+
+/* campos */
+.fgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:16px}
+.field{grid-column:span 6;position:relative}
+.field.half{grid-column:span 3}
+.field.third{grid-column:span 2}
+.field label{
+  display:block;font-size:11px;font-weight:700;
+  color:var(--muted);text-transform:uppercase;letter-spacing:.1em;
+  margin-bottom:8px;
+}
+.field label .req{color:var(--pink)}
+.field input,.field select{
+  width:100%;padding:13px 15px;border-radius:12px;font-family:inherit;
+  font-size:14.5px;font-weight:500;
+  background:var(--input-bg);border:1px solid var(--stroke);
+  color:var(--txt);outline:none;
+  transition:all .25s var(--ease);
+}
+.field input::placeholder{color:var(--muted-2);font-weight:400}
+.field input:focus,.field select:focus{
+  border-color:var(--cyan);
+  box-shadow:0 0 0 4px rgba(34,211,238,.14);
+  background:var(--glass-strong);
+}
+.field input[readonly]{
+  background:var(--input-ro-bg);
+  border-color:var(--input-ro-border);
+  color:var(--txt);cursor:not-allowed;
+  font-weight:600;padding-right:42px;
+}
+.field input[readonly]:focus{box-shadow:none;border-color:var(--input-ro-border)}
+.field .ro-icon{
+  position:absolute;right:14px;bottom:13px;font-size:14px;
+  opacity:.6;pointer-events:none;
+}
+.field-senha input{
+  font-size:18px;font-weight:700;letter-spacing:.06em;
+  padding:15px 15px 15px 48px;
+  background:var(--input-bg);
+}
+.field-senha input:focus{letter-spacing:.08em}
+.field-senha .search-ico{
+  position:absolute;left:16px;bottom:15px;font-size:17px;
+  opacity:.55;pointer-events:none;
+}
+.field-senha .status{
+  position:absolute;right:14px;bottom:14px;
+  display:flex;align-items:center;gap:6px;
+  font-size:11.5px;font-weight:700;letter-spacing:.05em;
+  padding:4px 10px;border-radius:8px;
+  opacity:0;transform:translateX(6px);
+  transition:all .3s var(--ease);
+  pointer-events:none;
+}
+.field-senha .status.show{opacity:1;transform:translateX(0)}
+.field-senha .status.ok{background:rgba(16,185,129,.15);color:#5eead4;border:1px solid rgba(16,185,129,.35)}
+.field-senha .status.err{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.35)}
+.field-senha .status.loading{background:rgba(139,92,246,.15);color:#c4b5fd;border:1px solid rgba(139,92,246,.35)}
+.field-senha .status .sp{
+  width:11px;height:11px;border-radius:50%;
+  border:2px solid rgba(196,181,253,.35);border-top-color:#c4b5fd;
+  animation:spin .7s linear infinite;
+}
+
+.section-lbl{
+  grid-column:span 6;
+  font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted-2);margin:8px 0 -4px;
+  display:flex;align-items:center;gap:10px;
+}
+.section-lbl::after{
+  content:'';flex:1;height:1px;
+  background:linear-gradient(90deg,var(--stroke),transparent);
+}
+
+/* ==================================================================
+   OVERLAY / LOADING
+   ================================================================== */
+.overlay{
+  position:fixed;inset:0;z-index:900;
+  background:radial-gradient(circle at 50% 45%,var(--modal-backdrop),var(--modal-backdrop));
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  display:grid;place-items:center;
+  opacity:0;pointer-events:none;transition:opacity .3s;
+}
+.overlay.open{opacity:1;pointer-events:auto}
+.load-box{text-align:center;padding:0 24px}
+.cube-wrap{perspective:900px;height:120px;display:grid;place-items:center;margin-bottom:22px}
+.cube{
+  width:66px;height:66px;position:relative;transform-style:preserve-3d;
+  animation:spinCube 3s infinite linear;
+}
+@keyframes spinCube{
+  0%{transform:rotateX(-22deg) rotateY(0)}
+  100%{transform:rotateX(-22deg) rotateY(360deg)}
+}
+.cube i{
+  position:absolute;width:66px;height:66px;border-radius:8px;
+  border:2px solid rgba(34,211,238,.55);
+  background:linear-gradient(135deg,rgba(34,211,238,.13),rgba(139,92,246,.13));
+  box-shadow:inset 0 0 30px rgba(34,211,238,.3),0 0 22px rgba(139,92,246,.22);
+}
+.cube i:nth-child(1){transform:translateZ(33px)}
+.cube i:nth-child(2){transform:rotateY(180deg) translateZ(33px)}
+.cube i:nth-child(3){transform:rotateY(90deg) translateZ(33px)}
+.cube i:nth-child(4){transform:rotateY(-90deg) translateZ(33px)}
+.cube i:nth-child(5){transform:rotateX(90deg) translateZ(33px)}
+.cube i:nth-child(6){transform:rotateX(-90deg) translateZ(33px)}
+.load-title{font-size:17px;font-weight:700;margin-bottom:6px;letter-spacing:-.01em}
+.load-sub{font-size:13px;color:var(--muted)}
+
+/* ==================================================================
+   TOAST
+   ================================================================== */
+.toast{
+  position:fixed;bottom:30px;left:50%;z-index:1000;
+  transform:translateX(-50%) translateY(140px);
+  padding:15px 26px;border-radius:14px;font-size:14px;font-weight:600;
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  transition:transform .45s var(--ease);max-width:90vw;text-align:center;
+  box-shadow:0 20px 50px -14px rgba(0,0,0,.6);
+  display:flex;align-items:center;gap:10px;
+}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.ok{background:rgba(16,185,129,.2);border:1px solid rgba(16,185,129,.5);color:#6ee7b7}
+.toast.err{background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.5);color:#fca5a5}
+.toast.warn{background:rgba(245,158,11,.2);border:1px solid rgba(245,158,11,.5);color:#fcd34d}
+
+/* ==================================================================
+   SCROLL / RESPONSIVO
+   ================================================================== */
+::-webkit-scrollbar{width:9px;height:9px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--scroll);border-radius:100px}
+::-webkit-scrollbar-thumb:hover{background:var(--scroll-h)}
+
+@media(max-width:820px){
+  .topbar{padding:14px 18px}
+  .app{padding:28px 16px 80px}
+  .card{padding:20px 16px}
+  .field.half,.field.third{grid-column:span 6}
+  .modal-head{padding:22px 20px 18px}
+  .modal-body{padding:22px 20px}
+  .modal-foot{padding:16px 20px 20px;flex-direction:column-reverse}
+  .modal-foot .btn{width:100%}
+  .hero h1{font-size:1.7rem}
+  table{font-size:12px}
+  th,td{padding:11px 12px}
+}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<div class="grid-bg"></div>
+<div class="orb o1"></div>
+<div class="orb o2"></div>
+<div class="orb o3"></div>
+
+<!-- ==================================================================
+     TOPBAR
+     ================================================================== -->
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-logo">T</div>
+    <div class="brand-txt">
+      <strong>TRIZY · Recepção</strong>
+      <span>Central de Controle</span>
+    </div>
+  </div>
+  <div class="top-actions">
+    <button class="theme-toggle" id="btnTheme" title="Alternar tema">
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="4"/>
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+      </svg>
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+      </svg>
+    </button>
+    <button class="btn btn-primary" id="btnNova">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+      Nova Recepção
+    </button>
+  </div>
+</header>
+
+<!-- ==================================================================
+     APP
+     ================================================================== -->
+<main class="app">
+
+  <section class="hero">
+    <div class="pill"><span class="dot"></span> Sistema Ativo</div>
+    <h1>Recepção de <span class="grad">Motoristas</span></h1>
+    <p>Registre a entrada dos motoristas. A senha informada consulta automaticamente a agenda, fornecedor e categoria no sistema.</p>
+  </section>
+
+  <section class="stats" id="statsGrid">
+    <div class="stat" style="--c:var(--cyan)">
+      <div class="stat-v" id="stTotal">—</div>
+      <div class="stat-l">Total de Recepções</div>
+    </div>
+    <div class="stat" style="--c:var(--green)">
+      <div class="stat-v" id="stHoje">—</div>
+      <div class="stat-l">Recepções Hoje</div>
+    </div>
+    <div class="stat" style="--c:var(--violet)">
+      <div class="stat-v" id="stFornecedores">—</div>
+      <div class="stat-l">Fornecedores (últimas 50)</div>
+    </div>
+    <div class="stat" style="--c:var(--amber)">
+      <div class="stat-v" id="stUltima">—</div>
+      <div class="stat-l">Última Recepção</div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>Recepções Recentes</h2>
+      <button class="btn btn-ghost" id="btnRefresh" style="padding:9px 16px;font-size:12.5px">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>
+        </svg>
+        Atualizar
+      </button>
+    </div>
+
+    <div class="tw">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th>Senha</th>
+            <th>Nome Completo</th>
+            <th>Fornecedor</th>
+            <th>Categoria</th>
+            <th>Placa</th>
+            <th>NF's</th>
+            <th>RG</th>
+            <th>CPF</th>
+            <th>Telefone</th>
+            <th>Registro</th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr><td colspan="10" class="empty">
+            <div class="empty-ico">📭</div>
+            <div class="empty-t">Carregando recepções…</div>
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<!-- ==================================================================
+     MODAL · NOVA RECEPÇÃO
+     ================================================================== -->
+<div class="modal-overlay" id="modal">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <div>
+        <h3><span class="mh-ico">🚚</span> Nova Recepção</h3>
+        <p>Informe a senha para carregar os dados da agenda</p>
+      </div>
+      <button class="close-x" id="btnClose" aria-label="Fechar">×</button>
+    </div>
+
+    <div class="modal-body">
+      <form class="fgrid" id="formRecepcao" autocomplete="off">
+
+        <!-- SENHA -->
+        <div class="field field-senha">
+          <label>Senha <span class="req">*</span></label>
+          <span class="search-ico">🔑</span>
+          <input id="fSenha" type="text" inputmode="numeric" placeholder="Digite a senha / ID de Agendamento" autocomplete="off" />
+          <span class="status" id="senhaStatus"></span>
+        </div>
+
+        <!-- SEÇÃO: DADOS DA AGENDA (READONLY) -->
+        <div class="section-lbl">Dados da Agenda <span style="font-weight:600;color:var(--muted-2);letter-spacing:.06em">(automático)</span></div>
+
+        <div class="field third">
+          <label>Agenda</label>
+          <input id="fAgenda" type="text" readonly placeholder="—" />
+          <span class="ro-icon">🔒</span>
+        </div>
+        <div class="field third">
+          <label>Fornecedor</label>
+          <input id="fFornecedor" type="text" readonly placeholder="—" />
+          <span class="ro-icon">🔒</span>
+        </div>
+        <div class="field third">
+          <label>Categoria</label>
+          <input id="fCategoria" type="text" readonly placeholder="—" />
+          <span class="ro-icon">🔒</span>
+        </div>
+
+        <!-- SEÇÃO: DADOS DO MOTORISTA -->
+        <div class="section-lbl">Dados do Motorista</div>
+
+        <div class="field">
+          <label>Nome Completo <span class="req">*</span></label>
+          <input id="fNome" type="text" placeholder="Nome completo do motorista" autocomplete="off" />
+        </div>
+
+        <div class="field half">
+          <label>RG</label>
+          <input id="fRg" type="text" placeholder="00.000.000-0" autocomplete="off" />
+        </div>
+        <div class="field half">
+          <label>CPF</label>
+          <input id="fCpf" type="text" inputmode="numeric" placeholder="000.000.000-00" autocomplete="off" maxlength="14" />
+        </div>
+
+        <div class="field half">
+          <label>Telefone</label>
+          <input id="fTelefone" type="text" inputmode="numeric" placeholder="(00) 00000-0000" autocomplete="off" maxlength="15" />
+        </div>
+        <div class="field half">
+          <label>Placa Cavalo</label>
+          <input id="fPlaca" type="text" placeholder="ABC1D23" autocomplete="off" maxlength="8" style="text-transform:uppercase;font-weight:700;letter-spacing:.08em" />
+        </div>
+
+        <div class="field">
+          <label>Nº NF's</label>
+          <input id="fNfs" type="text" placeholder="Ex.: 123456 / 123457 / 123458" autocomplete="off" />
+        </div>
+
+      </form>
+    </div>
+
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="btnCancel">Cancelar</button>
+      <button class="btn btn-primary" id="btnRecepcionar">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 6 9 17l-5-5"/>
+        </svg>
+        Recepcionar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================================================================
+     OVERLAY LOADING
+     ================================================================== -->
+<div class="overlay" id="overlay">
+  <div class="load-box">
+    <div class="cube-wrap">
+      <div class="cube"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div class="load-title" id="loadTitle">Processando…</div>
+    <div class="load-sub" id="loadSub">Aguarde um instante</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ==================================================================
+   ⚙️  CONFIGURAÇÃO
+   ================================================================== */
+const SUPABASE = {
+  url: 'https://jgtisruauiajjfoesvol.supabase.co',
+  apikey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpndGlzcnVhdWlhampmb2Vzdm9sIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc1OTY3NjYsImV4cCI6MjEwMzE3Mjc2Nn0.yiAsD6c06UEauyAUCFYs0KQnuWBVfLAeP_oYE8yGOwQ'
+};
+
+/* Tabelas e nomes das colunas no banco.
+   Ajuste aqui caso o schema use outros nomes. */
+const DB = {
+  tabelaRecepcao: 'CADASTRO_ENTREGADOR',
+  tabelaAgenda:   'AGENDA_TRIZY',
+
+  // Colunas em AGENDA_TRIZY
+  ag: {
+    id:         'ID de Agendamento',
+    dataEfetiva:'Data Efetiva',
+    fornecedor: 'Fornecedor',
+    setor:      'Setor'
+  },
+
+  // Colunas em CADASTRO_ENTREGADOR (nomes no Postgres)
+  rec: {
+    senha:        'senha',
+    agenda:       'agenda',
+    fornecedor:   'fornecedor',
+    categoria:    'categoria',
+    rg:           'rg',
+    cpf:          'cpf',
+    nome_completo:'nome_completo',
+    telefone:     'telefone',
+    placa_cavalo: 'placa_cavalo',
+    num_nfs:      'num_nfs',
+    created_at:   'created_at'
+  }
+};
+
+const HEADERS = {
+  'apikey': SUPABASE.apikey,
+  'Authorization': `Bearer ${SUPABASE.apikey}`,
+  'Content-Type': 'application/json',
+  'Accept': 'application/json'
+};
+
+/* ==================================================================
+   UTILITÁRIOS
+   ================================================================== */
+const $ = (id) => document.getElementById(id);
+const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+function toast(msg, tipo = 'ok') {
+  const t = $('toast');
+  t.className = 'toast ' + tipo;
+  t.textContent = msg;
+  requestAnimationFrame(() => t.classList.add('show'));
+  clearTimeout(t._tm);
+  t._tm = setTimeout(() => t.classList.remove('show'), 4200);
+}
+
+function showLoad(title = 'Processando…', sub = 'Aguarde um instante') {
+  $('loadTitle').textContent = title;
+  $('loadSub').textContent = sub;
+  $('overlay').classList.add('open');
+}
+function hideLoad() { $('overlay').classList.remove('open'); }
+
+/* formatação */
+function formatarDataHora(v) {
+  if (!v) return '—';
+  try {
+    const d = new Date(v);
+    if (isNaN(d.getTime())) return String(v);
+    return d.toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  } catch { return String(v); }
+}
+function formatarDataCurta(v) {
+  if (!v) return '—';
+  try {
+    const d = new Date(v);
+    if (isNaN(d.getTime())) return String(v);
+    return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
+  } catch { return String(v); }
+}
+function tempoRelativo(v) {
+  if (!v) return '—';
+  const d = new Date(v);
+  if (isNaN(d.getTime())) return '—';
+  const s = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (s < 60) return 'agora';
+  const m = Math.floor(s / 60);
+  if (m < 60) return m + 'min';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + 'h';
+  const dd = Math.floor(h / 24);
+  return dd + 'd';
+}
+
+/* máscaras */
+function maskCPF(v) {
+  return v.replace(/\D/g, '').slice(0, 11)
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+}
+function maskTelefone(v) {
+  const d = v.replace(/\D/g, '').slice(0, 11);
+  if (d.length <= 10) {
+    return d.replace(/^(\d{2})(\d)/, '($1) $2')
+            .replace(/(\d{4})(\d{1,4})$/, '$1-$2');
+  }
+  return d.replace(/^(\d{2})(\d)/, '($1) $2')
+          .replace(/(\d{5})(\d{1,4})$/, '$1-$2');
+}
+function maskPlaca(v) {
+  return v.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7);
+}
+
+/* ==================================================================
+   SUPABASE · CONSULTAS
+   ================================================================== */
+async function buscarAgenda(senha) {
+  const col = encodeURIComponent(`"${DB.ag.id}"`);
+  const val = encodeURIComponent(senha);
+  const url = `${SUPABASE.url}/rest/v1/${DB.tabelaAgenda}?select=*&${col}=eq.${val}&limit=1`;
+
+  const res = await fetch(url, { headers: HEADERS });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '');
+    throw new Error(`Falha na consulta (HTTP ${res.status}). ${txt.slice(0, 200)}`);
+  }
+  const data = await res.json();
+  return data && data.length ? data[0] : null;
+}
+
+async function salvarRecepcao(payload) {
+  const url = `${SUPABASE.url}/rest/v1/${DB.tabelaRecepcao}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { ...HEADERS, 'Prefer': 'return=representation' },
+    body: JSON.stringify(payload)
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '');
+    throw new Error(`Erro ao salvar (HTTP ${res.status}). ${txt.slice(0, 300)}`);
+  }
+  return await res.json();
+}
+
+async function carregarRecepcoes() {
+  const url = `${SUPABASE.url}/rest/v1/${DB.tabelaRecepcao}?select=*&order=${encodeURIComponent(DB.rec.created_at)}.desc&limit=50`;
+  const res = await fetch(url, {
+    headers: { ...HEADERS, 'Prefer': 'count=exact' }
+  });
+  if (!res.ok) {
+    const txt = await res.text().catch(() => '');
+    throw new Error(`Erro ao carregar (HTTP ${res.status}). ${txt.slice(0, 250)}`);
+  }
+  const rows = await res.json();
+  const range = res.headers.get('Content-Range') || '';
+  const total = parseInt((range.split('/')[1] || '0'), 10) || rows.length;
+  return { rows, total };
+}
+
+/* ==================================================================
+   RENDER · TABELA
+   ================================================================== */
+function renderTabela(rows) {
+  const tbody = $('tbody');
+  const C = DB.rec;
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="10" class="empty">
+      <div class="empty-ico">📭</div>
+      <div class="empty-t">Nenhuma recepção registrada</div>
+      <div class="empty-s">Clique em "Nova Recepção" para começar</div>
+    </td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map((r, i) => {
+    const senha     = r[C.senha] ?? '—';
+    const nome      = r[C.nome_completo] ?? '—';
+    const fornecedor= r[C.fornecedor] ?? '—';
+    const categoria = r[C.categoria] ?? '—';
+    const placa     = r[C.placa_cavalo] ?? '—';
+    const nfs       = r[C.num_nfs] ?? '—';
+    const rg        = r[C.rg] ?? '—';
+    const cpf       = r[C.cpf] ?? '—';
+    const tel       = r[C.telefone] ?? '—';
+    const reg       = r[C.created_at];
+
+    return `<tr style="animation:rise .4s var(--ease) ${i * 18}ms both">
+      <td><span class="badge badge-senha">${esc(senha)}</span></td>
+      <td><strong>${esc(nome)}</strong></td>
+      <td>${esc(fornecedor)}</td>
+      <td><span class="badge badge-cat">${esc(categoria)}</span></td>
+      <td>${placa !== '—' ? `<span class="badge badge-placa">${esc(placa)}</span>` : '—'}</td>
+      <td>${esc(nfs)}</td>
+      <td>${esc(rg)}</td>
+      <td>${esc(cpf)}</td>
+      <td>${esc(tel)}</td>
+      <td style="color:var(--muted)">${formatarDataHora(reg)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+/* ==================================================================
+   RENDER · STATS
+   ================================================================== */
+function renderStats(rows, total) {
+  $('stTotal').textContent = total ?? rows.length;
+
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const hojeCount = rows.filter(r => {
+    const d = r[DB.rec.created_at];
+    if (!d) return false;
+    return new Date(d).getTime() >= hoje.getTime();
+  }).length;
+  $('stHoje').textContent = hojeCount;
+
+  const fornecedores = new Set(
+    rows.map(r => r[DB.rec.fornecedor]).filter(Boolean)
+  );
+  $('stFornecedores').textContent = fornecedores.size;
+
+  const ultima = rows[0]?.[DB.rec.created_at];
+  $('stUltima').textContent = ultima ? tempoRelativo(ultima) : '—';
+}
+
+/* ==================================================================
+   MODAL · ABRIR / FECHAR
+   ================================================================== */
+function abrirModal() {
+  $('modal').classList.add('open');
+  limparFormulario();
+  setTimeout(() => $('fSenha').focus(), 300);
+}
+function fecharModal() {
+  $('modal').classList.remove('open');
+}
+
+function limparFormulario() {
+  ['fSenha','fAgenda','fFornecedor','fCategoria','fRg','fCpf','fTelefone','fPlaca','fNfs','fNome']
+    .forEach(id => { $(id).value = ''; $(id).dataset.original = ''; });
+  const st = $('senhaStatus');
+  st.className = 'status';
+  st.innerHTML = '';
+}
+
+/* ==================================================================
+   LOOKUP · SENHA → AGENDA_TRIZY
+   ================================================================== */
+let lookupToken = 0;
+let ultimaSenhaBuscada = null;
+
+async function fazerLookup() {
+  const senha = $('fSenha').value.trim();
+  const status = $('senhaStatus');
+
+  if (!senha) {
+    status.className = 'status';
+    $('fAgenda').value = '';
+    $('fFornecedor').value = '';
+    $('fCategoria').value = '';
+    return;
+  }
+  if (senha === ultimaSenhaBuscada) return;
+
+  const token = ++lookupToken;
+  status.className = 'status show loading';
+  status.innerHTML = '<span class="sp"></span> Buscando';
+
+  try {
+    const row = await buscarAgenda(senha);
+    if (token !== lookupToken) return;
+
+    if (!row) {
+      status.className = 'status show err';
+      status.textContent = '✕ Não encontrada';
+      $('fAgenda').value = '';
+      $('fFornecedor').value = '';
+      $('fCategoria').value = '';
+      ultimaSenhaBuscada = senha;
+      return;
+    }
+
+    const C = DB.ag;
+    const dataEfetiva = row[C.dataEfetiva];
+    const fornecedor  = row[C.fornecedor]  ?? '';
+    const setor       = row[C.setor]       ?? '';
+
+    $('fAgenda').value     = dataEfetiva ? formatarDataHora(dataEfetiva) : '—';
+    $('fAgenda').dataset.original = dataEfetiva || '';
+    $('fFornecedor').value = fornecedor || '—';
+    $('fCategoria').value  = setor || '—';
+
+    status.className = 'status show ok';
+    status.textContent = '✓ Encontrada';
+    ultimaSenhaBuscada = senha;
+
+  } catch (err) {
+    console.error(err);
+    if (token !== lookupToken) return;
+    status.className = 'status show err';
+    status.textContent = '⚠ Erro';
+    toast('Erro na consulta: ' + err.message, 'err');
+  }
+}
+
+/* debounce */
+let debounceTm = null;
+function agendarLookup() {
+  clearTimeout(debounceTm);
+  debounceTm = setTimeout(fazerLookup, 550);
+}
+
+/* ==================================================================
+   RECEPCIONAR
+   ================================================================== */
+async function recepcionar() {
+  const senha = $('fSenha').value.trim();
+  const nome  = $('fNome').value.trim();
+
+  if (!senha) { toast('Informe a senha', 'err'); $('fSenha').focus(); return; }
+  if (!nome)  { toast('Informe o nome completo', 'err'); $('fNome').focus(); return; }
+
+  const C = DB.rec;
+  const payload = {
+    [C.senha]:         senha,
+    [C.agenda]:        $('fAgenda').dataset.original || $('fAgenda').value || null,
+    [C.fornecedor]:    valorOuNull($('fFornecedor').value),
+    [C.categoria]:     valorOuNull($('fCategoria').value),
+    [C.rg]:            valorOuNull($('fRg').value),
+    [C.cpf]:           valorOuNull($('fCpf').value),
+    [C.nome_completo]: nome,
+    [C.telefone]:      valorOuNull($('fTelefone').value),
+    [C.placa_cavalo]:  valorOuNull($('fPlaca').value),
+    [C.num_nfs]:       valorOuNull($('fNfs').value)
+  };
+
+  const btn = $('btnRecepcionar');
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span> Enviando…';
+
+  showLoad('Registrando recepção…', `${nome} · Senha ${senha}`);
+
+  try {
+    await salvarRecepcao(payload);
+    await sleep(500);
+
+    $('loadTitle').textContent = 'Recepção registrada!';
+    $('loadSub').textContent = 'Atualizando painel…';
+    await sleep(500);
+
+    fecharModal();
+    hideLoad();
+    toast('✅ Recepção registrada com sucesso!', 'ok');
+
+    await carregarTudo();
+
+  } catch (err) {
+    console.error(err);
+    hideLoad();
+    toast('❌ ' + err.message, 'err');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  }
+}
+
+function valorOuNull(v) {
+  const s = String(v ?? '').trim();
+  return s === '' || s === '—' ? null : s;
+}
+
+/* ==================================================================
+   CARREGAR TUDO
+   ================================================================== */
+async function carregarTudo(silencioso = false) {
+  try {
+    if (!silencioso) {
+      $('tbody').innerHTML = `<tr><td colspan="10" class="empty">
+        <div class="empty-ico">⏳</div>
+        <div class="empty-t">Carregando recepções…</div>
+      </td></tr>`;
+    }
+    const { rows, total } = await carregarRecepcoes();
+    renderTabela(rows);
+    renderStats(rows, total);
+  } catch (err) {
+    console.error(err);
+    $('tbody').innerHTML = `<tr><td colspan="10" class="empty">
+      <div class="empty-ico">⚠️</div>
+      <div class="empty-t">Erro ao carregar</div>
+      <div class="empty-s">${esc(err.message)}</div>
+    </td></tr>`;
+    if (!silencioso) toast('Erro: ' + err.message, 'err');
+  }
+}
+
+/* ==================================================================
+   TEMA (claro / escuro)
+   ================================================================== */
+function initTheme() {
+  const salvo = localStorage.getItem('trizy-theme');
+  const tema = salvo || 'dark';
+  document.documentElement.setAttribute('data-theme', tema);
+}
+function toggleTheme() {
+  const atual = document.documentElement.getAttribute('data-theme');
+  const novo = atual === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', novo);
+  localStorage.setItem('trizy-theme', novo);
+  toast(novo === 'dark' ? '🌙 Modo noturno' : '☀️ Modo claro', 'ok');
+}
+
+/* ==================================================================
+   EVENTOS
+   ================================================================== */
+/* tema */
+$('btnTheme').addEventListener('click', toggleTheme);
+
+/* modal */
+$('btnNova').addEventListener('click', abrirModal);
+$('btnClose').addEventListener('click', fecharModal);
+$('btnCancel').addEventListener('click', fecharModal);
+$('modal').addEventListener('click', e => { if (e.target === $('modal')) fecharModal(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && $('modal').classList.contains('open')) fecharModal();
+  if (e.key === 'Enter' && $('modal').classList.contains('open') && e.target.tagName === 'INPUT' && e.target.id !== 'fSenha') {
+    // permite Enter para salvar apenas se não estiver no campo senha
+  }
+});
+
+/* senha → lookup */
+$('fSenha').addEventListener('input', agendarLookup);
+$('fSenha').addEventListener('blur', fazerLookup);
+$('fSenha').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); clearTimeout(debounceTm); fazerLookup(); }
+});
+
+/* máscaras */
+$('fCpf').addEventListener('input', e => { e.target.value = maskCPF(e.target.value); });
+$('fTelefone').addEventListener('input', e => { e.target.value = maskTelefone(e.target.value); });
+$('fPlaca').addEventListener('input', e => { e.target.value = maskPlaca(e.target.value); });
+
+/* ações */
+$('btnRecepcionar').addEventListener('click', recepcionar);
+$('btnRefresh').addEventListener('click', () => { carregarTudo(); toast('Atualizando…', 'ok'); });
+
+/* atalho: N = nova recepção */
+document.addEventListener('keydown', e => {
+  if (e.key.toLowerCase() === 'n' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    const tag = document.activeElement?.tagName;
+    if (tag !== 'INPUT' && tag !== 'TEXTAREA' && !$('modal').classList.contains('open')) {
+      abrirModal();
+    }
+  }
+});
+
+/* tilt 3D nos cards */
+document.querySelectorAll('.stat, .card').forEach(el => {
+  el.addEventListener('mousemove', e => {
+    if (window.innerWidth < 900) return;
+    const r = el.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - .5;
+    const y = (e.clientY - r.top) / r.height - .5;
+    el.style.transform = `perspective(1200px) rotateY(${x * 2.5}deg) rotateX(${-y * 2.5}deg) translateY(-2px)`;
+  });
+  el.addEventListener('mouseleave', () => { el.style.transform = ''; });
+});
+
+/* ==================================================================
+   BOOT
+   ================================================================== */
+initTheme();
+console.log('%cTRIZY · Central de Recepção', 'color:#22d3ee;font-size:16px;font-weight:bold');
+console.log('%cSupabase:', 'color:#8b5cf6', SUPABASE.url);
+
+carregarTudo();
+/* auto-refresh a cada 30s */
+setInterval(() => carregarTudo(true), 30000);
+</script>
+</body>
+</html>
